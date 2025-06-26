@@ -22,4 +22,4 @@ jobs:
           context: .
           file: ./dockerfiles/dockerfile.backend
           push: true
-          tags: abhi99sh/backend:${{ github.sha }}
+          tags: abhi99shek/todo-backend:${{ github.sha }}
