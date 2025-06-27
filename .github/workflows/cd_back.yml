@@ -10,21 +10,29 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Docker Login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and push
-        uses: docker/build-push-action@v2
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./dockerfiles/dockerfile.backend
           push: true
           tags: abhi99shek/todo-backend:${{ github.sha }}
+
       - name: Deploy To VM
         run: |
-          echo "${{secrets.SSH_PRIVATE_KEY}}" &> ~/ssh_key
-          chmod 700 /home/runner/ssh_key
-          ssh -o StrictHostKeyChecking=no -i /home/runner/ssh_key root@143.110.188.90 -t docker stop user_backend && docker run --name user_backend -d -p 8080:8080 abhi99shek/todo-backend:${{ github.sha }}
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
+          chmod 600 ssh_key
+          ssh -o StrictHostKeyChecking=no -i ssh_key root@143.110.188.90 "
+            docker stop user_backend || true &&
+            docker rm user_backend || true &&
+            docker pull abhi99shek/todo-backend:${{ github.sha }} &&
+            docker run --name user_backend -d -p 8080:8080 abhi99shek/todo-backend:${{ github.sha }}
+          "
